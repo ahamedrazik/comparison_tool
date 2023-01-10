@@ -1,13 +1,13 @@
 # importing package
 import sys
 
-
 import psycopg2
 import pandas as pd
 import sqlalchemy
 import warnings
 import os
 import json
+import numpy as np
 from dotenv import load_dotenv, find_dotenv
 from pandas_profiling import ProfileReport
 import matplotlib.pyplot as plt
@@ -106,17 +106,18 @@ def target_db_connect():
         # Creating a cursor object using the cursor() method
         cursor = conn.cursor()
         tablename = input("Enter the table_name: ")
-        cursor.execute(f"SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = '"+tablename+"');")
+        cursor.execute(
+            f"SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = '" + tablename + "');")
 
         if cursor.fetchone()[0]:
             cursor.execute("Select * FROM employee LIMIT 0")
             colnames = [desc[0] for desc in cursor.description]
-        # # # Executing an MYSQL function using the execute() method
+            # # # Executing an MYSQL function using the execute() method
 
             cursor.execute("select * from employee")
             # # Fetch a single row using fetchall() method.
             postgres_data = cursor.fetchall()
-            postgres_df = pd.DataFrame(postgres_data,columns=colnames)
+            df = pd.DataFrame(postgres_data, columns=colnames)
             profile_re_gen(postgres_df)
         else:
             print("table not exits")
@@ -164,14 +165,14 @@ def report_gen_from_json(json_data):
     print("****************************")
 
     columns_details = json_dict["variables"]
-    for each_col, each_value in columns_details.items():
+    for each_col, each_value in iter(columns_details.items()):
         print("\ncolumns_name:", each_col)
 
-        for key_value in each_value:
+        for key_value in iter(each_value):
             data = ["range", "n_distinct", "is_unique",
                     "n_missing", "n_unique", "count",
                     "type", "ordering", "n_negative", "mean", "std", "variance", "min", "max"]
-            for cus_col in data:
+            for cus_col in iter(data):
                 if key_value == cus_col:
                     key_value = cus_col
                     print(key_value + ':', each_value[key_value])
@@ -182,7 +183,7 @@ def histogram_plot(json_data):
     columns_details = json_dict["variables"]
     for key, value in columns_details.items():
         print("\ncolumns_name:", key)
-        for i, j in value.items():
+        for i, j in iter(value.items()):
             if i == 'histogram':
                 i = 'histogram'
                 keysList = [key for key in j]
@@ -207,13 +208,50 @@ def df_compare(source_df, target_df):
         print(err)
 
 
+def onemillion_rows():
+    DATA_DIR = r'D:\partions_joins\Variant _p2.csv'
+    df = pd.read_csv(DATA_DIR)
+    altermethod_profiling(df)
+
+
+def altermethod_profiling(df):
+    row_count = df.shape[0]
+    col_count = df.shape[1]
+    ca_type = df.select_dtypes(include=['object']).columns.tolist()
+    ca_count = len(ca_type)
+    # dg = df.select_dtypes(include=np.number).columns.tolist()
+    n_type = df.select_dtypes(include=['number']).columns.tolist()
+    n_count = len(n_type)
+    # Select duplicate rows of all columns
+    duplicate = df.duplicated(keep=False)
+    display_profiling(row_count, col_count, ca_count, n_count, duplicate)
+
+
+def display_profiling(row_count, col_count, ca_count, n_count, duplicate):
+    print("****************************")
+    print("TABLE INFORMATION ")
+    print("****************************")
+
+    print("TOTAL NUMBER OF ROWS:", row_count)
+    print("TOTAL NUMBER OF COLUMNS:", col_count)
+    print("NUMBER OF Numeric TYPE:", n_count)
+    print("NUMBER OF Categorical TYPE:", ca_count)
+    print("TOTAL NUMBER OF DUPLICATES:", duplicate)
+
+
+def each_col_analysis():
+    # mean,std,min,max
+    print("staticstic analysis")
+
+
 if __name__ == '__main__':
     # source_db_connect()
     # csv_format_read()
     # excel_format_read()
-    txt_format_read()
+    # txt_format_read()
     # target_db_connect()
     # df_compare(source_df, target_df)
     # profile_report_generator(source_df)
     # histogram_plot()
     # report_gen_from_json()
+    onemillion_rows()
