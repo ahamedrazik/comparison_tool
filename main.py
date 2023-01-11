@@ -117,7 +117,7 @@ def target_db_connect():
             cursor.execute("select * from employee")
             # # Fetch a single row using fetchall() method.
             postgres_data = cursor.fetchall()
-            df = pd.DataFrame(postgres_data, columns=colnames)
+            postgres_df = pd.DataFrame(postgres_data, columns=colnames)
             profile_re_gen(postgres_df)
         else:
             print("table not exits")
@@ -212,6 +212,8 @@ def onemillion_rows():
     DATA_DIR = r'D:\partions_joins\Variant _p2.csv'
     df = pd.read_csv(DATA_DIR)
     altermethod_profiling(df)
+    each_col_analysis(df)
+    columns_analysis(df)
 
 
 def altermethod_profiling(df):
@@ -237,11 +239,47 @@ def display_profiling(row_count, col_count, ca_count, n_count, duplicate):
     print("NUMBER OF Numeric TYPE:", n_count)
     print("NUMBER OF Categorical TYPE:", ca_count)
     print("TOTAL NUMBER OF DUPLICATES:", duplicate)
+    print("\n")
 
 
-def each_col_analysis():
+def each_col_analysis(df):
     # mean,std,min,max
-    print("staticstic analysis")
+    print("****************************")
+    print("SATISTICS ANALYSIS ")
+    print("****************************")
+    print("\n")
+    n_type = df.select_dtypes(include=['number']).columns.tolist()
+    for n_col in iter(n_type):
+        s_mean = df[n_col].mean()
+        s_std = df[n_col].std()
+        s_median = df[n_col].median()
+        s_max = df[n_col].max()
+        s_min = df[n_col].min()
+        s_count = df[n_col].count()
+
+        print("Mean of Column Values:", s_mean)
+        print("Standard Deviation of Values:", s_std)
+        print("Median of Values:", s_median)
+        print("Maximum of Values:", s_max)
+        print("Minimum of Values:", s_min)
+        print("Count of Non-null Values:", s_count)
+        columns_analysis(df)
+        print("\n")
+    else:
+        print("No NUmeric type")
+
+
+def columns_analysis(df):
+    for col_anysis in df.columns:
+        s_unique = df[col_anysis].nunique(dropna=True)
+        is_unique = df[col_anysis].is_unique
+        s_sort = df[col_anysis].is_monotonic_increasing
+
+        print("columns_names:", col_anysis)
+        print("series is having duplicate data:", is_unique)
+        print("unique of  Values:", s_unique)
+        print("Values are sorted asc or dec :", s_sort)
+
 
 
 if __name__ == '__main__':
