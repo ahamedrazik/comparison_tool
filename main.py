@@ -47,7 +47,10 @@ def source_db_connect():
             print("DATA PROFILING....")
             sql_query = pd.read_sql_query('SELECT * FROM {};'.format(tablename), engine)
             sql_db_df = pd.DataFrame(sql_query)
-            profile_re_gen(sql_db_df)
+            # profile_re_gen(sql_db_df)
+            table_profiling(sql_db_df)
+            satistice_analysis(sql_db_df)
+            columns_analysis(sql_db_df)
             # return sql_db_df
             # profile_report_generator(sql_db_df, tablename)
         else:
@@ -65,7 +68,10 @@ def csv_format_read():
     print("Data Profiling flat file with different format like csv,excel,txt")
     path = r"C:\Users\RAZIK KHAN\Downloads\SampleSuperstorenew.csv"
     csv_df = pd.read_csv(path)
-    profile_re_gen(csv_df)
+    # profile_re_gen(csv_df)
+    table_profiling(csv_df)
+    satistice_analysis(csv_df)
+    columns_analysis(csv_df)
 
 
 # 2.excel format explicitly ignore warning
@@ -73,7 +79,10 @@ def excel_format_read():
     warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
     path1 = r"C:\Users\RAZIK KHAN\Downloads\sample.xlsx"
     excel_df = pd.read_excel(path1)
-    profile_re_gen(excel_df)
+    # profile_re_gen(excel_df)
+    table_profiling(excel_df)
+    satistice_analysis(excel_df)
+    columns_analysis(excel_df)
 
 
 # 3.txt format
@@ -81,7 +90,10 @@ def txt_format_read():
     # path2 = r"C:\Users\RAZIK KHAN\Downloads\names.txt"
     path2 = r"D:\YearPredictionMSD.txt"
     df_txt_fm = pd.read_csv(path2, sep=',')
-    profile_re_gen(df_txt_fm)
+    # profile_re_gen(df_txt_fm)
+    table_profiling(df_txt_fm)
+    satistice_analysis(df_txt_fm)
+    columns_analysis(df_txt_fm)
     # print(df_txt_fm)
     # return df_txt_fm
 
@@ -118,7 +130,10 @@ def target_db_connect():
             # # Fetch a single row using fetchall() method.
             postgres_data = cursor.fetchall()
             postgres_df = pd.DataFrame(postgres_data, columns=colnames)
-            profile_re_gen(postgres_df)
+            # profile_re_gen(postgres_df)
+            table_profiling(postgres_df)
+            satistice_analysis(postgres_df)
+            columns_analysis(postgres_df)
         else:
             print("table not exits")
 
@@ -140,6 +155,7 @@ def profile_re_gen(df):
     profile = ProfileReport(df, config_file="profiling_config.yml")
     json_data = profile.to_json()
     report_gen_from_json(json_data)
+
 
 
 # read the json data
@@ -211,12 +227,12 @@ def df_compare(source_df, target_df):
 def onemillion_rows():
     DATA_DIR = r'D:\partions_joins\Variant _p2.csv'
     df = pd.read_csv(DATA_DIR)
-    altermethod_profiling(df)
-    each_col_analysis(df)
+    table_profiling(df)
+    satistice_analysis(df)
     columns_analysis(df)
 
 
-def altermethod_profiling(df):
+def table_profiling(df):
     row_count = df.shape[0]
     col_count = df.shape[1]
     ca_type = df.select_dtypes(include=['object']).columns.tolist()
@@ -225,7 +241,7 @@ def altermethod_profiling(df):
     n_type = df.select_dtypes(include=['number']).columns.tolist()
     n_count = len(n_type)
     # Select duplicate rows of all columns
-    duplicate = df.duplicated(keep=False)
+    duplicate = df.duplicated(keep=False).sum()
     display_profiling(row_count, col_count, ca_count, n_count, duplicate)
 
 
@@ -242,7 +258,7 @@ def display_profiling(row_count, col_count, ca_count, n_count, duplicate):
     print("\n")
 
 
-def each_col_analysis(df):
+def satistice_analysis(df):
     # mean,std,min,max
     print("****************************")
     print("SATISTICS ANALYSIS ")
@@ -257,29 +273,35 @@ def each_col_analysis(df):
         s_min = df[n_col].min()
         s_count = df[n_col].count()
 
+        print("column names:", n_col)
         print("Mean of Column Values:", s_mean)
         print("Standard Deviation of Values:", s_std)
         print("Median of Values:", s_median)
         print("Maximum of Values:", s_max)
         print("Minimum of Values:", s_min)
         print("Count of Non-null Values:", s_count)
-        columns_analysis(df)
         print("\n")
-    else:
-        print("No NUmeric type")
 
 
 def columns_analysis(df):
-    for col_anysis in df.columns:
+    print("****************************")
+    print("COLUMN LEVEL ANALYSIS ")
+    print("****************************")
+    print("\n")
+    for col_anysis in iter(df.columns):
         s_unique = df[col_anysis].nunique(dropna=True)
         is_unique = df[col_anysis].is_unique
         s_sort = df[col_anysis].is_monotonic_increasing
+        s_missing = df[col_anysis].isnull().sum()
+        s_nan = df[col_anysis].notnull().sum()
 
         print("columns_names:", col_anysis)
-        print("series is having duplicate data:", is_unique)
-        print("unique of  Values:", s_unique)
-        print("Values are sorted asc or dec :", s_sort)
-
+        print("number of unique values:", s_unique)
+        print("Values are unique or not :",is_unique)
+        print("Values are sorted or not :", s_sort)
+        print("Total NaN values:", s_missing)
+        print("NOT NULL values:", s_nan)
+        print("\n")
 
 
 if __name__ == '__main__':
