@@ -157,7 +157,6 @@ def profile_re_gen(df):
     report_gen_from_json(json_data)
 
 
-
 # read the json data
 
 def report_gen_from_json(json_data):
@@ -230,6 +229,7 @@ def onemillion_rows():
     table_profiling(df)
     satistice_analysis(df)
     columns_analysis(df)
+    co_relations(df)
 
 
 def table_profiling(df):
@@ -294,14 +294,25 @@ def columns_analysis(df):
         s_sort = df[col_anysis].is_monotonic_increasing
         s_missing = df[col_anysis].isnull().sum()
         s_nan = df[col_anysis].notnull().sum()
+        # s_freq = df[col_anysis].mode()
+        s_freq=df[col_anysis].value_counts()[df[col_anysis].value_counts() == df[col_anysis].value_counts().max()]
 
         print("columns_names:", col_anysis)
         print("number of unique values:", s_unique)
-        print("Values are unique or not :",is_unique)
+        print("Values are unique or not :", is_unique)
         print("Values are sorted or not :", s_sort)
         print("Total NaN values:", s_missing)
         print("NOT NULL values:", s_nan)
+        print("the most frequent value:", s_freq)
         print("\n")
+
+
+def co_relations(df):
+    n_type = df.select_dtypes(include=['number']).columns.tolist()
+    for co_re in iter(n_type):
+        co_rel = df[co_re].corr(df[co_re],method='pearson',min_periods=1)
+        print("co-relation column name:",co_re)
+        print("corelation:", co_rel)
 
 
 if __name__ == '__main__':
